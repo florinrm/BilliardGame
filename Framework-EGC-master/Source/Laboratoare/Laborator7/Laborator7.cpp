@@ -127,7 +127,7 @@ void Laborator7::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & 
 	glm::vec3 eyePosition = GetSceneCamera()->transform->GetWorldPosition();
 	GLint loc_eye_position = glGetUniformLocation(shader->program, "eye_position");
 	glUniform3fv(loc_eye_position, 1, glm::value_ptr(eyePosition));
-
+	/*
 	// TODO: Set material property uniforms (shininess, kd, ks, object color) 
 	GLint loc = glGetUniformLocation(shader->program, "material_shininess");
 	glUniform1i(loc, materialShininess);
@@ -137,8 +137,8 @@ void Laborator7::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & 
 
 	loc = glGetUniformLocation(shader->program, "material_ks");  // componenta speculara
 	glUniform1f(loc, materialKs);
-
-	loc = glGetUniformLocation(shader->program, "object_color");
+	*/
+	GLint loc = glGetUniformLocation(shader->program, "object_color");
 	glUniform3fv(loc, 1, glm::value_ptr(color));
 
 	// Bind model matrix

@@ -6,6 +6,7 @@ using namespace std;
 #include <Core/Engine.h>
 
 #include <Laboratoare/LabList.h>
+#include "Tema\Tema2.h"
 
 int main(int argc, char **argv)
 {
@@ -19,7 +20,7 @@ int main(int argc, char **argv)
 	WindowObject* window = Engine::Init(wp);
 
 	// Create a new 3D world and start running it
-	World *world = new Laborator4(); //Laborator3_Vis2D
+	World *world = new Tema2(); //Laborator3_Vis2D
 	world->Init();
 	world->Run();
 
