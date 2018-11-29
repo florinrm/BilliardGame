@@ -25,8 +25,11 @@ void Tema2::Init()
 {
 	renderCameraTarget = false;
 
+	window->CenterPointer();
+	window->DisablePointer();
+
 	camera = new Laborator::Camera();
-	camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+	camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0));
 
 	{
 		Mesh* mesh = new Mesh("box");
@@ -49,6 +52,12 @@ void Tema2::Init()
 	{
 		Mesh* mesh = new Mesh("oilTank");
 		mesh->LoadMesh(RESOURCE_PATH::MODELS + "Props", "oildrum.obj");
+		meshes[mesh->GetMeshID()] = mesh;
+	}
+
+	{
+		Mesh* mesh = new Mesh("cue");
+		mesh->LoadMesh(RESOURCE_PATH::MODELS + "Props", "10522_Pool_Cue_v1_L3.obj");
 		meshes[mesh->GetMeshID()] = mesh;
 	}
 
@@ -903,6 +912,8 @@ void Tema2::Update(float deltaTimeSeconds)
 		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(3, 3, 3));
 	}
 
+	// the rest of ballz (ayy ballz)
+
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.5f, 1.3f, whiteBallZ));
@@ -1007,11 +1018,19 @@ void Tema2::Update(float deltaTimeSeconds)
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
 		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
 	}
+
+	{
+		glm::mat4 modelMatrix = glm::mat4(1);
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(7.6f, 1.3f, whiteBallZ));
+		modelMatrix = glm::rotate(modelMatrix, 3 * glm::pi<float>() / 2, glm::vec3(0, 1, 0));
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 0.1, 10) * 0.2f);
+		RenderSimpleMesh(meshes["box"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
+	}
 }
 
 void Tema2::FrameEnd()
 {
-	DrawCoordinatSystem(camera->GetViewMatrix(), projectionMatrix);
+	// do nothing
 }
 
 void Tema2::RenderMesh(Mesh * mesh, Shader * shader, const glm::mat4 & modelMatrix)
@@ -1157,6 +1176,9 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
 
 void Tema2::OnKeyPress(int key, int mods)
 {
+	if (key == GLFW_KEY_SPACE) {
+		camera->RotateThirdPerson_OX(glm::radians(30.0f));
+	}
 	// add key press event
 	if (key == GLFW_KEY_T) {
 		renderCameraTarget = !renderCameraTarget;
@@ -1193,7 +1215,10 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 			camera->RotateThirdPerson_OX(-2 * sensivityOX * deltaY);
 			camera->RotateThirdPerson_OY(-2 * sensivityOY * deltaX);
 		}
-
+	}
+	else {
+		//cueMoveY += deltaY;
+		//cueMoveZ += deltaX;
 	}
 }
 
@@ -1214,3 +1239,5 @@ void Tema2::OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY)
 void Tema2::OnWindowResize(int width, int height)
 {
 }
+
+

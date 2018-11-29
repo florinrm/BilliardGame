@@ -70,8 +70,8 @@ namespace Laborator
 				// Compute the new "forward" and "up" vectors
 				// Attention! Don't forget to normalize the vectors
 				// Use glm::rotate()
-				forward = glm::normalize(glm::rotate(glm::mat4(1.f), angle, right) * glm::vec4(forward, 0));
-				up = glm::normalize(glm::cross(right, forward));
+				forward = glm::normalize(glm::vec3(glm::rotate(glm::mat4(1.0f), angle, glm::vec3(right)) * glm::vec4(forward, 1)));
+				up = glm::cross(right, forward);
 			}
 
 			void RotateFirstPerson_OY(float angle)
@@ -132,6 +132,38 @@ namespace Laborator
 			glm::vec3 GetTargetPosition()
 			{
 				return position + forward * distanceToTarget;
+			}
+
+			void setPosition(glm::vec3 position) {
+				this->position = position;
+			}
+
+			void setForward(glm::vec3 forward) {
+				this->forward = forward;
+			}
+
+			void setRight(glm::vec3 right) {
+				this->right = right;
+			}
+
+			void setUp(glm::vec3 up) {
+				this->up = up;
+			}
+
+			glm::vec3 getPosition() {
+				return position;
+			}
+
+			glm::vec3 getUp() {
+				return up;
+			}
+
+			glm::vec3 getRight() {
+				return right;
+			}
+
+			glm::vec3 getForward() {
+				return forward;
 			}
 
 		public:

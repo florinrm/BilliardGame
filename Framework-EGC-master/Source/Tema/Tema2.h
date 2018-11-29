@@ -20,6 +20,8 @@ public:
 	void Init() override;
 
 private:
+	enum gameState{GAME_NOT_STARTED, GAME_CUE_SHOT};
+
 	void FrameStart() override;
 	void Update(float deltaTimeSeconds) override;
 	void FrameEnd() override;
@@ -38,11 +40,13 @@ private:
 
 	float whiteBallX = 6.5f;
 	float whiteBallZ = 1.0f;
+	float cueMoveY = 0;
+	float cueMoveZ = 0;
 	bool gameStarted = false;
-	bool firstPlayer = true; // reb
+	bool firstPlayer = true; // red
 	bool secondPlayer = false; // yellow
-	vector<pair<int, int>> red;
-	vector<pair<int, int>> yellow;
+	
+	vector<glm::vec3> holesPositions;
 
 protected:
 	Laborator::Camera *camera;
