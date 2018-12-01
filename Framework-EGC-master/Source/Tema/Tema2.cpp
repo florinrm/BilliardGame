@@ -1018,8 +1018,6 @@ void Tema2::Update(float deltaTimeSeconds)
 	for (int i = 0; i < gameBalls.size(); ++i) {
 		for (int j = 0; j < gameBalls.size(); ++j) {
 			if (i != j) {
-				Ball * firstBall = gameBalls[i];
-				Ball * secondBall = gameBalls[j];
 				glm::vec2 dist = getClosestPointOnLine(gameBalls[i]->getBallX(), gameBalls[i]->getBallY(),
 					gameBalls[i]->getBallX() + gameBalls[i]->ballSpeed.x, gameBalls[j]->getBallY() + gameBalls[i]->ballSpeed.y,
 					gameBalls[i]->getBallX(), gameBalls[j]->getBallY());
@@ -1071,9 +1069,7 @@ void Tema2::Update(float deltaTimeSeconds)
 
 	switch (currentGameState) {
 		case gameState::GAME_DEFAULT:
-			camera->Set(glm::vec3(0, 2.05533, 0), glm::vec3(0.f, 0.f, 0.0f), glm::vec3(1, 0, 0), distanceToTarget);
-			break;
-		case gameState::GAME_STARTING:
+			camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
 			break;
 		case gameState::GAME_CAMERA_SWITCH:
 			camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
@@ -1109,22 +1105,15 @@ void Tema2::Update(float deltaTimeSeconds)
 		shaders["ShaderLab9"]->Use();
 
 		GLuint animationDirection = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationDirection");
-		glUniform3fv(animationDirection, 1, glm::value_ptr(cue_direction));
-
-		// Notify vertex shade that we are drawing the rod
 		GLuint cue_shader = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "cue_shader");
-		glUniform1i(cue_shader, 1);
-
-		// Set the rod color to the player color
 		GLuint colorLoc = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "color");
-		glUniform3fv(colorLoc, 1, glm::value_ptr(playersColors[player]));
-
 		GLuint conditionLoc = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "isUsedByRod");
 
-		// Use color instead of texture
+		glUniform3fv(animationDirection, 1, glm::value_ptr(cue_direction));
+		glUniform1i(cue_shader, 1);
+		glUniform3fv(colorLoc, 1, glm::value_ptr(playersColors[player]));
 		glUniform1i(conditionLoc, 1);
 		RenderMesh(cue->cueMesh, shaders["ShaderLab9"], cue->component.getModelMatrix());
-		// Go back to using textures
 		glUniform1i(conditionLoc, 0);
 		glUniform1i(cue_shader, 0);
 	}
@@ -1242,26 +1231,23 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
 		case gameState::GAME_CUE_SHOT:
 		{
 			if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
-				animation += deltaTime;
-				std::cout << "shitting\n";
 				shaders["ShaderLab9"]->Use();
 
-				// Notify vertex shade that we are drawing the rod
-				GLuint animationEnabeled = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
-				glUniform1i(animationEnabeled, 1);
-				// Update time in shader
-				GLuint time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
-				glUniform1f(time, animation);
+				animation += deltaTime;
+				GLuint cue_animation = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
+				GLuint cue_time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
 				moving = abs(0.15f * sin(2 * animation));
+
+				glUniform1i(cue_animation, 1);
+				glUniform1f(cue_time, animation);
 			}
 			else {
 				shaders["ShaderLab9"]->Use();
-				// Notify vertex shade that we are drawing the rod
-				GLuint animationEnabeled = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
-				glUniform1i(animationEnabeled, 0);
-				GLuint time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
+				GLuint cue_animation = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
+				GLuint cue_time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
 				animation = 0;
-				glUniform1f(time, animation);
+				glUniform1i(cue_animation, 0);
+				glUniform1f(cue_time, animation);
 
 			}
 		}
@@ -1292,13 +1278,13 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 	float sensivityOY = 0.001f;
 
 	switch (currentGameState) {
-		case gameState::GAME_WAIT_FOR_BALLS_TO_STOP:
-		case gameState::GAME_STARTING:
-			camera->RotateFirstPerson_OX(-deltaY * sensivityOY);
-			camera->RotateFirstPerson_OY(-deltaX * sensivityOY);
-			break;
 		case gameState::GAME_CUE_SHOT:
 			camera->RotateThirdPerson_OY(-deltaX * sensivityOY);
+			break;
+		case gameState::GAME_STARTING:
+		case gameState::GAME_WAIT_FOR_BALLS_TO_STOP:
+			camera->RotateFirstPerson_OX(-deltaY * sensivityOY);
+			camera->RotateFirstPerson_OY(-deltaX * sensivityOY);
 			break;
 	}
 }
@@ -1308,17 +1294,16 @@ void Tema2::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods)
 	// add mouse button press event
 }
 
-float scale(float inValue, float minInRange, float maxInRange, float minOutRange, float maxOutRange) {
+float scaleObject(float inValue, float minInRange, float maxInRange, float minOutRange, float maxOutRange) {
 	return minOutRange + (maxOutRange - minOutRange) * (inValue / (maxInRange - minInRange));
 }
 
 void Tema2::OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods)
 {
 	// add mouse button release event
-	if (currentGameState == gameState::GAME_CUE_SHOT && button == GLFW_MOUSE_BUTTON_2) {
-		// Set the ball speed based on how much is retracted
-		whiteBall->ballSpeed = -scale(moving, 0, 0.15, 0.1, 2)  * glm::vec2(cue_direction.x, cue_direction.z);
+	if (button == GLFW_MOUSE_BUTTON_2 && currentGameState == gameState::GAME_CUE_SHOT) {
 		currentGameState = gameState::GAME_WAIT_FOR_BALLS_TO_STOP;
+		whiteBall->ballSpeed = (-1) * scaleObject(moving, 0, 0.15, 0.1, 2)  * glm::vec2(cue_direction.x, cue_direction.z);
 	}
 }
 
