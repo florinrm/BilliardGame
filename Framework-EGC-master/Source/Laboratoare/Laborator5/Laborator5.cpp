@@ -21,7 +21,7 @@ void Laborator5::Init()
 	renderCameraTarget = false;
 
 	camera = new Laborator::Camera();
-	camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+	camera->Set(glm::vec3(0, 2, 3.5f), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), 0);
 
 	{
 		Mesh* mesh = new Mesh("box");

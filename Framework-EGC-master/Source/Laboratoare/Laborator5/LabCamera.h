@@ -16,21 +16,22 @@ namespace Laborator
 				distanceToTarget = 2;
 			}
 
-			Camera(const glm::vec3 &position, const glm::vec3 &center, const glm::vec3 &up)
+			Camera(const glm::vec3 &position, const glm::vec3 &center, const glm::vec3 &up, float distance)
 			{
-				Set(position, center, up);
+				Set(position, center, up, distance);
 			}
 
 			~Camera()
 			{ }
 
 			// Update camera
-			void Set(const glm::vec3 &position, const glm::vec3 &center, const glm::vec3 &up)
+			void Set(const glm::vec3 &position, const glm::vec3 &center, const glm::vec3 &up, float distance)
 			{
 				this->position = position;
 				forward = glm::normalize(center-position);
 				right	= glm::cross(forward, up);
 				this->up = glm::cross(right,forward);
+				distanceToTarget = distance;
 			}
 
 			void MoveForward(float distance)
@@ -52,6 +53,11 @@ namespace Laborator
 			{
 				// TODO : Translate the camera using the up vector
 				position += distance * glm::normalize(up);
+			}
+
+			void TranslateToTarget(float distance)
+			{
+				position += forward * distanceToTarget;
 			}
 
 			void TranslateRight(float distance)
@@ -164,6 +170,14 @@ namespace Laborator
 
 			glm::vec3 getForward() {
 				return forward;
+			}
+
+			void setCameraDistanceToTarget(float dist) {
+				distanceToTarget = dist;
+			}
+
+			float getCameraDistanceToTarget() {
+				return distanceToTarget;
 			}
 
 		public:

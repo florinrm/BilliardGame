@@ -29,7 +29,7 @@ void Tema2::Init()
 	window->DisablePointer();
 
 	camera = new Laborator::Camera();
-	camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0));
+	camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
 
 	{
 		Mesh* mesh = new Mesh("box");
@@ -40,18 +40,6 @@ void Tema2::Init()
 	{
 		Mesh* mesh = new Mesh("sphere");
 		mesh->LoadMesh(RESOURCE_PATH::MODELS + "Primitives", "sphere.obj");
-		meshes[mesh->GetMeshID()] = mesh;
-	}
-
-	{
-		Mesh* mesh = new Mesh("teapot");
-		mesh->LoadMesh(RESOURCE_PATH::MODELS + "Primitives", "teapot.obj");
-		meshes[mesh->GetMeshID()] = mesh;
-	}
-
-	{
-		Mesh* mesh = new Mesh("oilTank");
-		mesh->LoadMesh(RESOURCE_PATH::MODELS + "Props", "oildrum.obj");
 		meshes[mesh->GetMeshID()] = mesh;
 	}
 
@@ -69,7 +57,45 @@ void Tema2::Init()
 		shaders[shader->GetName()] = shader;
 	}
 
+	{
+		Shader *shader2 = new Shader("ShaderLab9");
+		shader2->AddShader("Source/Tema/Shaders/VertexShader.glsl", GL_VERTEX_SHADER);
+		shader2->AddShader("Source/Tema/Shaders/FragmentShader.glsl", GL_FRAGMENT_SHADER);
+		shader2->CreateAndLink();
+		shaders[shader2->GetName()] = shader2;
+	}
+
 	projectionMatrix = glm::perspective(RADIANS(60), window->props.aspectRatio, 0.01f, 200.0f);
+
+	// holes
+	holesPositions.push_back(glm::vec3(7.4f, 1.2f, 2.4f));
+	holesPositions.push_back(glm::vec3(7.4f, 1.2f, -0.4f));
+	holesPositions.push_back(glm::vec3(1.6f, 1.2f, -0.4f));
+	holesPositions.push_back(glm::vec3(1.6f, 1.2f, 2.4f));
+	holesPositions.push_back(glm::vec3(4.5f, 1.2f, -0.4f));
+	holesPositions.push_back(glm::vec3(4.5f, 1.2f, 2.4f));
+
+	for (int i = 0; i < holesPositions.size(); ++i) {
+		tableHoles.push_back(new Hole(holesPositions[i]));
+	}
+
+	// game ballz
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(2.5f, 1.3f, whiteBallZ)));
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(2.37f, 1.3f, whiteBallZ - 0.075f)));
+	gameBalls.push_back(new Ball(glm::vec3(1.6f, 1.6f, 0), glm::vec3(2.37f, 1.3f, whiteBallZ + 0.075f)));
+	gameBalls.push_back(new Ball(glm::vec3(1.6f, 1.6f, 0), glm::vec3(2.24f, 1.3f, whiteBallZ - 0.15f)));
+	gameBalls.push_back(new Ball(glm::vec3(0, 0, 0), glm::vec3(2.24f, 1.3f, whiteBallZ)));
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(2.24f, 1.3f, whiteBallZ + 0.15f)));
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(2.11f, 1.3f, whiteBallZ + 0.075f)));
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(2.11f, 1.3f, whiteBallZ - 0.075f)));
+	gameBalls.push_back(new Ball(glm::vec3(1.6f, 1.6f, 0), glm::vec3(2.11f, 1.3f, whiteBallZ - 0.2275f)));
+	gameBalls.push_back(new Ball(glm::vec3(1.6f, 1.6f, 0), glm::vec3(2.11f, 1.3f, whiteBallZ + 0.2275f)));
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(1.98f, 1.3f, whiteBallZ - 0.15f)));
+	gameBalls.push_back(new Ball(glm::vec3(1.6f, 1.6f, 0), glm::vec3(1.98f, 1.3f, whiteBallZ)));
+	gameBalls.push_back(new Ball(glm::vec3(1.6f, 1.6f, 0), glm::vec3(1.98f, 1.3f, whiteBallZ + 0.15f)));
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(1.98f, 1.3f, whiteBallZ - 0.30f)));
+	gameBalls.push_back(new Ball(glm::vec3(1, 0, 0), glm::vec3(1.98f, 1.3f, whiteBallZ + 0.30f)));
+	gameBalls.push_back(whiteBall);
 }
 
 void Tema2::FrameStart()
@@ -855,6 +881,8 @@ void Tema2::Update(float deltaTimeSeconds)
 		RenderSimpleMesh(meshes["box"], shaders["ShaderLab7"], modelMatrix, glm::vec3(0, 0.3f, 0.1f));
 	}
 
+	// holes
+
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(7.4f, 1.2f, 2.4f));
@@ -897,134 +925,208 @@ void Tema2::Update(float deltaTimeSeconds)
 		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(0, 0, 0));
 	}
 
-	if (!gameStarted) {
-		firstPlayer = true;
-		secondPlayer = false;
-		whiteBallX = 6.5f;
-		whiteBallZ = 1;
-	}
-
-	// white ball
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(whiteBallX, 1.3f, whiteBallZ));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(3, 3, 3));
-	}
-
-	// the rest of ballz (ayy ballz)
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.5f, 1.3f, whiteBallZ));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.37f, 1.3f, whiteBallZ - 0.075f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.37f, 1.3f, whiteBallZ + 0.075f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1.6f, 1.6f, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.24f, 1.3f, whiteBallZ - 0.15f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1.6f, 1.6f, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.24f, 1.3f, whiteBallZ));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(0, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.24f, 1.3f, whiteBallZ + 0.15f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.11f, 1.3f, whiteBallZ + 0.075f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.11f, 1.3f, whiteBallZ - 0.075f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.11f, 1.3f, whiteBallZ - 0.2275f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1.6f, 1.6f, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(2.11f, 1.3f, whiteBallZ + 0.2275f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1.6f, 1.6f, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(1.98f, 1.3f, whiteBallZ - 0.15f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(1.98f, 1.3f, whiteBallZ));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1.6f, 1.6f, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(1.98f, 1.3f, whiteBallZ + 0.15f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1.6f, 1.6f, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(1.98f, 1.3f, whiteBallZ - 0.30f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
-
-	{
-		glm::mat4 modelMatrix = glm::mat4(1);
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(1.98f, 1.3f, whiteBallZ + 0.30f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
-		RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
+	for (int i = 0; i < gameBalls.size(); ++i) {
+		if (!gameBalls[i]->hasBallEntered()) {
+			glm::mat4 modelMatrix = glm::mat4(1);
+			modelMatrix = glm::translate(modelMatrix, gameBalls[i]->getBallPosition());
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(0.15f));
+			RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, gameBalls[i]->getBallColor());
+		}
 	}
 
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(7.6f, 1.3f, whiteBallZ));
-		modelMatrix = glm::rotate(modelMatrix, 3 * glm::pi<float>() / 2, glm::vec3(0, 1, 0));
+		modelMatrix = glm::rotate(modelMatrix, glm::pi<float>() / 2, glm::vec3(0, 1, 0));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 0.1, 10) * 0.2f);
 		RenderSimpleMesh(meshes["box"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
+	}
+
+	
+
+	for (int i = 0; i < gameBalls.size(); ++i) {
+		gameBalls[i]->modifySpeed(-0.4f * gameBalls[i]->getBallSpeed() * deltaTimeSeconds);
+		gameBalls[i]->setPosition(gameBalls[i]->getPosition() + glm::vec3(gameBalls[i]->getBallSpeed().x, 0, 
+									gameBalls[i]->getBallSpeed().y) * deltaTimeSeconds);
+	}
+
+	if (currentGameState == gameState::GAME_WAIT_FOR_BALLS_TO_STOP) {
+
+		if (collisionColor != playersColors[player] && !allOfBalls) {
+			faulted_player = true;
+			++playersFaults[player];
+		}
+
+		currentGameState = gameState::GAME_CAMERA_SWITCH;
+		hasBallHitHole = false;
+	}
+
+	// collisions between wall and game balls
+	for (int i = 0; i < gameBalls.size(); ++i) {
+		// 7.4f, 1.2f, -0.4f
+	// 1.6f, 1.2f, 2.4f)
+		if ((gameBalls[i]->getBallY() - gameBalls[i]->getBallRadius() <= -0.4f) ||
+			(gameBalls[i]->getBallY() + gameBalls[i]->getBallRadius() >= 2.4f)) {
+			gameBalls[i]->ballPosition.z += gameBalls[i]->ballSpeed.y * deltaTimeSeconds;
+			gameBalls[i]->ballSpeed.y *= -1;
+		}
+
+		if ((gameBalls[i]->getBallX() - gameBalls[i]->getBallRadius() <= 1.6f) ||
+			(gameBalls[i]->getBallX() + gameBalls[i]->getBallRadius() >= 7.4f)) {
+			gameBalls[i]->ballPosition.x += gameBalls[i]->ballSpeed.x * deltaTimeSeconds;
+			gameBalls[i]->ballSpeed.x *= -1;
+		}
+	}
+
+	// "collision" between dem ballz and holes
+	for (int i = 0; i < holesPositions.size(); ++i) {
+		for (int j = 0; j < gameBalls.size(); ++j) {
+			float distanceToHole = glm::distance(tableHoles[i]->holePosition, gameBalls[j]->getBallPosition());
+			if (distanceToHole < tableHoles[i]->holeRadius + gameBalls[j]->ballRadius) {
+				if (gameBalls[j] != whiteBall) {
+					if (allOfBalls) {
+						hasBallHitHole = true;
+						allOfBalls = false;
+						playersScores[player]++;
+						playersColors[player] = gameBalls[j]->getBallColor();
+						if (gameBalls[j]->getBallColor() == glm::vec3(1, 0, 0)) {
+							playersColors[1 - player] = glm::vec3(1, 1, 0);
+						}
+						else {
+							playersColors[1 - player] = glm::vec3(1, 0, 0);
+						}	
+					} else if (playersColors[player] == gameBalls[j]->getBallColor()) {
+						hasBallHitHole = true;
+						playersScores[player]++;
+					}
+
+					gameBalls[j]->setPosition(glm::vec3(999, -999, 999));
+					gameBalls[j]->enterBall();
+				}
+				else { 
+					// for white ball
+					gameBalls[j]->ballPosition = glm::vec3(6.5f, 1.3f, 1.f);
+					gameBalls[j]->ballSpeed = glm::vec2(0, 0);
+					++playersFaults[player];
+					player = 1 - player;
+					currentGameState = gameState::GAME_DEFAULT;
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < gameBalls.size(); ++i) {
+		for (int j = 0; j < gameBalls.size(); ++j) {
+			if (i != j) {
+				Ball * firstBall = gameBalls[i];
+				Ball * secondBall = gameBalls[j];
+				glm::vec2 dist = getClosestPointOnLine(gameBalls[i]->getBallX(), gameBalls[i]->getBallY(),
+					gameBalls[i]->getBallX() + gameBalls[i]->ballSpeed.x, gameBalls[j]->getBallY() + gameBalls[i]->ballSpeed.y,
+					gameBalls[i]->getBallX(), gameBalls[j]->getBallY());
+
+				double closestDistance = pow(gameBalls[j]->getBallX() - dist.x, 2)
+						+ pow(gameBalls[j]->getBallY() - dist.y, 2);
+
+				if (closestDistance <= pow(gameBalls[i]->ballRadius + gameBalls[j]->ballRadius, 2)) {
+					// a collision has occurred
+					float distance = glm::distance(gameBalls[i]->ballPosition, gameBalls[j]->ballPosition);
+					if (distance < gameBalls[i]->ballRadius + gameBalls[j]->ballRadius) {
+						if (gameBalls[i] == whiteBall) {
+							if (!first_collision) {
+								first_collision = true;
+								collisionColor = gameBalls[j]->getBallColor();
+							}
+						} else if (gameBalls[j] == whiteBall) {
+							if (!first_collision) {
+								first_collision = true;
+								collisionColor = gameBalls[i]->getBallColor();
+							}
+						}
+
+						double x = (gameBalls[j]->getBallX() - gameBalls[i]->getBallX()) / distance;
+						double y = (gameBalls[j]->getBallY() - gameBalls[i]->getBallY()) / distance;
+
+						double someDistance = 2 * (gameBalls[i]->ballSpeed.x * x + gameBalls[i]->ballSpeed.y * y -
+							gameBalls[j]->ballSpeed.x * x - gameBalls[j]->ballSpeed.y * y) /
+							(gameBalls[i]->ballMass + gameBalls[j]->ballMass);
+
+						float acc = 1.3f;
+
+						gameBalls[i]->ballSpeed.x = gameBalls[i]->ballSpeed.x - someDistance * gameBalls[i]->ballMass * x;
+						gameBalls[i]->ballSpeed.y = gameBalls[i]->ballSpeed.y - someDistance * gameBalls[i]->ballMass * y;
+						gameBalls[j]->ballSpeed.x = gameBalls[j]->ballSpeed.x + someDistance * gameBalls[j]->ballMass * x;
+						gameBalls[j]->ballSpeed.y = gameBalls[j]->ballSpeed.y + someDistance * gameBalls[j]->ballMass * y;
+
+						// Apply 1 position update after collision
+						gameBalls[i]->ballPosition.x = gameBalls[i]->getBallX() + acc * gameBalls[i]->ballSpeed.x  * deltaTimeSeconds;
+						gameBalls[i]->ballPosition.z = gameBalls[i]->getBallY() + acc * gameBalls[i]->ballSpeed.y * deltaTimeSeconds;
+						gameBalls[j]->ballPosition.x = gameBalls[j]->getBallX() + acc * gameBalls[j]->ballSpeed.x * deltaTimeSeconds;
+						gameBalls[j]->ballPosition.z = gameBalls[j]->getBallY() + acc * gameBalls[j]->ballSpeed.y * deltaTimeSeconds;
+
+					}
+				}
+			}
+		}
+	}
+
+	switch (currentGameState) {
+		case gameState::GAME_DEFAULT:
+			camera->Set(glm::vec3(0, 2.05533, 0), glm::vec3(0.f, 0.f, 0.0f), glm::vec3(1, 0, 0), distanceToTarget);
+			break;
+		case gameState::GAME_STARTING:
+			break;
+		case gameState::GAME_CAMERA_SWITCH:
+			camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
+			first_collision = false;
+			if (faulted_player)
+				currentGameState = GAME_DEFAULT;
+			else
+				currentGameState = GAME_CUE_SHOT;
+			faulted_player = false;
+			break;
+		case gameState::GAME_CUE_SHOT:
+			distanceToTarget = 0.8;
+			camera->setCameraDistanceToTarget(distanceToTarget);
+			camera->setPosition(whiteBall->ballPosition - glm::normalize(camera->getForward()) * distanceToTarget);
+			break;
+		case gameState::GAME_WAIT_FOR_BALLS_TO_STOP:
+			camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
+			break;
+		default:
+			break;
+	}
+
+	std::cout << "state" << currentGameState << std::endl;
+
+	if (currentGameState == gameState::GAME_CUE_SHOT) {
+		glm::vec3 cuePosition = camera->getPosition();
+		cuePosition.y = 1.2f;
+		cue->cuePosition = cuePosition;
+		cue->component.lookAt(whiteBall->ballPosition);
+		cue_direction = glm::normalize(cue->cuePosition - whiteBall->ballPosition);
+		cue->cuePosition = whiteBall->ballPosition + cue_direction * 0.6f;
+
+		shaders["ShaderLab9"]->Use();
+
+		GLuint animationDirection = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationDirection");
+		glUniform3fv(animationDirection, 1, glm::value_ptr(cue_direction));
+
+		// Notify vertex shade that we are drawing the rod
+		GLuint cue_shader = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "cue_shader");
+		glUniform1i(cue_shader, 1);
+
+		// Set the rod color to the player color
+		GLuint colorLoc = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "color");
+		glUniform3fv(colorLoc, 1, glm::value_ptr(playersColors[player]));
+
+		GLuint conditionLoc = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "isUsedByRod");
+
+		// Use color instead of texture
+		glUniform1i(conditionLoc, 1);
+		RenderMesh(cue->cueMesh, shaders["ShaderLab9"], cue->component.getModelMatrix());
+		// Go back to using textures
+		glUniform1i(conditionLoc, 0);
+		glUniform1i(cue_shader, 0);
 	}
 }
 
@@ -1088,102 +1190,92 @@ void Tema2::RenderSimpleMesh(Mesh *mesh, Shader *shader, const glm::mat4 & model
 
 void Tema2::OnInputUpdate(float deltaTime, int mods)
 {
-	// move the camera only if MOUSE_RIGHT button is pressed
-	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
-	{
-		float cameraSpeed = 2.0f;
+	float speed = 4.0f, positionSpeed = 0.8f;
 
-		if (window->KeyHold(GLFW_KEY_W)) {
-			// TODO : translate the camera forward
-			camera->TranslateForward(deltaTime * cameraSpeed);
-		}
-
-		if (window->KeyHold(GLFW_KEY_A)) {
-			// TODO : translate the camera to the left
-			camera->TranslateRight(-deltaTime * cameraSpeed);
-		}
-
-		if (window->KeyHold(GLFW_KEY_S)) {
-			// TODO : translate the camera backwards
-			camera->TranslateForward(-deltaTime * cameraSpeed);
-		}
-
-		if (window->KeyHold(GLFW_KEY_D)) {
-			// TODO : translate the camera to the right
-			camera->TranslateRight(deltaTime * cameraSpeed);
-		}
-
-		if (window->KeyHold(GLFW_KEY_Q)) {
-			// TODO : translate the camera down
-			camera->TranslateUpword(-deltaTime * cameraSpeed);
-		}
-
-		if (window->KeyHold(GLFW_KEY_E)) {
-			// TODO : translate the camera up
-			camera->TranslateUpword(deltaTime * cameraSpeed);
-		}
-
-		if (window->KeyHold(GLFW_KEY_O)) {
-			orthoLeft = -8.0f;
-			orthoRight = 8.0f;
-			orthoUp = 4.5f;
-			orthoDown = -4.5;
-			projectionMatrix = glm::ortho(orthoLeft, orthoRight, orthoDown, orthoUp, 0.0f, 200.0f);
-			isOrtho = true;
-		}
-
-		// increase height
-		if (window->KeyHold(GLFW_KEY_UP) && isOrtho) {
-			orthoUp += deltaTime;
-			orthoDown -= deltaTime;
-			projectionMatrix = glm::ortho(orthoLeft, orthoRight, orthoDown, orthoUp, 0.0f, 200.0f);
-		}
-
-		// increase height
-		if (window->KeyHold(GLFW_KEY_DOWN) && isOrtho) {
-			orthoUp -= deltaTime;
-			orthoDown += deltaTime;
-			projectionMatrix = glm::ortho(orthoLeft, orthoRight, orthoDown, orthoUp, 0.0f, 200.0f);
-		}
-
-		// increase length
-		if (window->KeyHold(GLFW_KEY_RIGHT) && isOrtho) {
-			orthoRight += deltaTime;
-			orthoLeft -= deltaTime;
-			projectionMatrix = glm::ortho(orthoLeft, orthoRight, orthoDown, orthoUp, 0.0f, 200.0f);
-		}
-
-		// decrease length
-		if (window->KeyHold(GLFW_KEY_LEFT) && isOrtho) {
-			orthoRight -= deltaTime;
-			orthoLeft += deltaTime;
-			projectionMatrix = glm::ortho(orthoLeft, orthoRight, orthoDown, orthoUp, 0.0f, 200.0f);
-		}
-
-		// inversare FOV
-		if (window->KeyHold(GLFW_KEY_K)) {
-			projectionMatrix = glm::perspective(-90.f, -2.f, 2.f, -200.0f);
-			isOrtho = false;
-		}
-		// FOV normal
-		if (window->KeyHold(GLFW_KEY_P))
+	float cameraSpeed = 0.1f;
+	switch (currentGameState) {
+		case gameState::GAME_DEFAULT:
 		{
-			projectionMatrix = glm::perspective(90.f, 2.f, 2.f, 200.0f);
-			isOrtho = false;
+			if (window->KeyHold(GLFW_KEY_D)) {
+				whiteBall->ballPosition.z += positionSpeed * deltaTime;
+			}
+			if (window->KeyHold(GLFW_KEY_W)) {
+				whiteBall->ballPosition.x += positionSpeed * deltaTime;
+			}
+
+			if (window->KeyHold(GLFW_KEY_A)) {
+				whiteBall->ballPosition.z -= positionSpeed * deltaTime;
+			}
+
+			if (window->KeyHold(GLFW_KEY_S)) {
+				whiteBall->ballPosition.x -= positionSpeed * deltaTime;
+			}
+
+			// Constrain whit ball position to the table 
+			whiteBall->ballPosition.z = clip<float>(whiteBall->ballPosition.z, -0.3f, 2.3f);
+			whiteBall->ballPosition.x = clip<float>(whiteBall->ballPosition.x, 1.5f, 7.2f);
 		}
+		break;
+		case gameState::GAME_STARTING:
+		{
+			if (window->KeyHold(GLFW_KEY_A)) {
+				whiteBall->ballPosition.z += positionSpeed * deltaTime;
+			}
+			if (window->KeyHold(GLFW_KEY_W)) {
+				whiteBall->ballPosition.x -= positionSpeed * deltaTime;
+			}
+
+			if (window->KeyHold(GLFW_KEY_D)) {
+				whiteBall->ballPosition.z -= positionSpeed * deltaTime;
+			}
+
+			if (window->KeyHold(GLFW_KEY_S)) {
+				whiteBall->ballPosition.x += positionSpeed * deltaTime;
+			}
+
+			// Constrain white ball position to first third of the table
+			whiteBall->ballPosition.z = clip<float>(whiteBall->ballPosition.z, -0.3f, 2.3f);
+			whiteBall->ballPosition.x = clip<float>(whiteBall->ballPosition.x, 5.6f, 7.2f);
+		}
+		break;
+
+		case gameState::GAME_CUE_SHOT:
+		{
+			if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
+				animation += deltaTime;
+				std::cout << "shitting\n";
+				shaders["ShaderLab9"]->Use();
+
+				// Notify vertex shade that we are drawing the rod
+				GLuint animationEnabeled = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
+				glUniform1i(animationEnabeled, 1);
+				// Update time in shader
+				GLuint time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
+				glUniform1f(time, animation);
+				moving = abs(0.15f * sin(2 * animation));
+			}
+			else {
+				shaders["ShaderLab9"]->Use();
+				// Notify vertex shade that we are drawing the rod
+				GLuint animationEnabeled = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
+				glUniform1i(animationEnabeled, 0);
+				GLuint time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
+				animation = 0;
+				glUniform1f(time, animation);
+
+			}
+		}
+			break;
 	}
 }
 
 void Tema2::OnKeyPress(int key, int mods)
 {
-	if (key == GLFW_KEY_SPACE) {
+	if ((currentGameState == gameState::GAME_STARTING || currentGameState == gameState::GAME_DEFAULT)
+				&& key == GLFW_KEY_SPACE) {
 		camera->RotateThirdPerson_OX(glm::radians(30.0f));
+		currentGameState = gameState::GAME_CUE_SHOT;
 	}
-	// add key press event
-	if (key == GLFW_KEY_T) {
-		renderCameraTarget = !renderCameraTarget;
-	}
-
 }
 
 void Tema2::OnKeyRelease(int key, int mods)
@@ -1195,30 +1287,19 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 {
 	// add mouse move event
 
-	if (window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
-	{
-		float sensivityOX = 0.001f;
-		float sensivityOY = 0.001f;
+	// add mouse move event
+	float sensivityOX = 0.001f;
+	float sensivityOY = 0.001f;
 
-		if (window->GetSpecialKeyState() == 0) {
-			renderCameraTarget = false;
-			// TODO : rotate the camera in First-person mode around OX and OY using deltaX and deltaY
-			// use the sensitivity variables for setting up the rotation speed
-			camera->RotateFirstPerson_OX(-2 * sensivityOX * deltaY);
-			camera->RotateFirstPerson_OY(-2 * sensivityOY * deltaX);
-		}
-
-		if (window->GetSpecialKeyState() && GLFW_MOD_CONTROL) {
-			renderCameraTarget = true;
-			// TODO : rotate the camera in Third-person mode around OX and OY using deltaX and deltaY
-			// use the sensitivity variables for setting up the rotation speed
-			camera->RotateThirdPerson_OX(-2 * sensivityOX * deltaY);
-			camera->RotateThirdPerson_OY(-2 * sensivityOY * deltaX);
-		}
-	}
-	else {
-		//cueMoveY += deltaY;
-		//cueMoveZ += deltaX;
+	switch (currentGameState) {
+		case gameState::GAME_WAIT_FOR_BALLS_TO_STOP:
+		case gameState::GAME_STARTING:
+			camera->RotateFirstPerson_OX(-deltaY * sensivityOY);
+			camera->RotateFirstPerson_OY(-deltaX * sensivityOY);
+			break;
+		case gameState::GAME_CUE_SHOT:
+			camera->RotateThirdPerson_OY(-deltaX * sensivityOY);
+			break;
 	}
 }
 
@@ -1227,9 +1308,18 @@ void Tema2::OnMouseBtnPress(int mouseX, int mouseY, int button, int mods)
 	// add mouse button press event
 }
 
+float scale(float inValue, float minInRange, float maxInRange, float minOutRange, float maxOutRange) {
+	return minOutRange + (maxOutRange - minOutRange) * (inValue / (maxInRange - minInRange));
+}
+
 void Tema2::OnMouseBtnRelease(int mouseX, int mouseY, int button, int mods)
 {
 	// add mouse button release event
+	if (currentGameState == gameState::GAME_CUE_SHOT && button == GLFW_MOUSE_BUTTON_2) {
+		// Set the ball speed based on how much is retracted
+		whiteBall->ballSpeed = -scale(moving, 0, 0.15, 0.1, 2)  * glm::vec2(cue_direction.x, cue_direction.z);
+		currentGameState = gameState::GAME_WAIT_FOR_BALLS_TO_STOP;
+	}
 }
 
 void Tema2::OnMouseScroll(int mouseX, int mouseY, int offsetX, int offsetY)

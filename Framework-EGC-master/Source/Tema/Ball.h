@@ -4,23 +4,18 @@
 #include "ObjectComponent.h"
 
 class Ball {
-private:
+public:
 	glm::vec3 ballColor;
 	glm::vec3 ballPosition;
 	bool hasEntered = false;
 	float ballRadius = 0.15f / 2;
-	float ballMass = 5;
+	float ballMass = 1;
 	ObjectComponent ballComponents;
 	glm::vec2 ballSpeed;
 	glm::vec2 ballAcceleration;
 
-public:
 	Ball(glm::vec3 color, glm::vec3 position);
 	~Ball();
-
-	glm::vec3 getBallColor() {
-		return ballColor;
-	}
 
 	void enterBall() {
 		hasEntered = true;
@@ -52,6 +47,38 @@ public:
 
 	void setBallAcceleration(glm::vec2 acceleration) {
 		ballAcceleration = acceleration;
+	}
+
+	glm::vec3 getBallPosition() {
+		return ballPosition;
+	}
+
+	glm::vec3 getBallColor() {
+		return ballColor;
+	}
+
+	bool hasBallEntered() {
+		return hasEntered;
+	}
+
+	void modifySpeed(glm::vec2 speed) {
+		ballSpeed += speed;
+	}
+
+	void setPosition(glm::vec3 pos) {
+		this->ballPosition = pos;
+	}
+
+	glm::vec3 getPosition() {
+		return ballPosition;
+	}
+
+	float getBallX() {
+		return ballPosition.x;
+	}
+
+	float getBallY() {
+		return ballPosition.z;
 	}
 
 };
