@@ -111,6 +111,7 @@ void Tema2::FrameStart()
 
 void Tema2::Update(float deltaTimeSeconds)
 {
+	// game table
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(2, 0.6f, 0));
@@ -933,16 +934,16 @@ void Tema2::Update(float deltaTimeSeconds)
 			RenderSimpleMesh(meshes["sphere"], shaders["ShaderLab7"], modelMatrix, gameBalls[i]->getBallColor());
 		}
 	}
-
+	/*
 	{
 		glm::mat4 modelMatrix = glm::mat4(1);
 		modelMatrix = glm::translate(modelMatrix, glm::vec3(7.6f, 1.3f, whiteBallZ));
 		modelMatrix = glm::rotate(modelMatrix, glm::pi<float>() / 2, glm::vec3(0, 1, 0));
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 0.1, 10) * 0.2f);
 		RenderSimpleMesh(meshes["box"], shaders["ShaderLab7"], modelMatrix, glm::vec3(1, 0, 0));
-	}
+	} */
 
-	
+	bool check = all_of(gameBalls.begin(), gameBalls.end(), [](Ball* ball) {return ball->hasBallEntered() ? true : glm::distance(ball->ballSpeed, glm::vec2(0, 0)) < 0.01; });
 
 	for (int i = 0; i < gameBalls.size(); ++i) {
 		gameBalls[i]->modifySpeed(-0.4f * gameBalls[i]->getBallSpeed() * deltaTimeSeconds);
@@ -950,7 +951,7 @@ void Tema2::Update(float deltaTimeSeconds)
 									gameBalls[i]->getBallSpeed().y) * deltaTimeSeconds);
 	}
 
-	if (currentGameState == gameState::GAME_WAIT_FOR_BALLS_TO_STOP) {
+	if (currentGameState == gameState::GAME_WAIT_FOR_BALLS_TO_STOP && check) {
 
 		if (collisionColor != playersColors[player] && !allOfBalls) {
 			faulted_player = true;
@@ -963,8 +964,6 @@ void Tema2::Update(float deltaTimeSeconds)
 
 	// collisions between wall and game balls
 	for (int i = 0; i < gameBalls.size(); ++i) {
-		// 7.4f, 1.2f, -0.4f
-	// 1.6f, 1.2f, 2.4f)
 		if ((gameBalls[i]->getBallY() - gameBalls[i]->getBallRadius() <= -0.4f) ||
 			(gameBalls[i]->getBallY() + gameBalls[i]->getBallRadius() >= 2.4f)) {
 			gameBalls[i]->ballPosition.z += gameBalls[i]->ballSpeed.y * deltaTimeSeconds;
@@ -978,7 +977,7 @@ void Tema2::Update(float deltaTimeSeconds)
 		}
 	}
 
-	// "collision" between dem ballz and holes
+	// "collision" between dem ballz and these holes (ballz in holez, get it?)
 	for (int i = 0; i < holesPositions.size(); ++i) {
 		for (int j = 0; j < gameBalls.size(); ++j) {
 			float distanceToHole = glm::distance(tableHoles[i]->holePosition, gameBalls[j]->getBallPosition());
@@ -1017,7 +1016,9 @@ void Tema2::Update(float deltaTimeSeconds)
 
 	for (int i = 0; i < gameBalls.size(); ++i) {
 		for (int j = 0; j < gameBalls.size(); ++j) {
-			if (i != j) {
+			if (i == j)
+				continue;
+			else {
 				glm::vec2 dist = getClosestPointOnLine(gameBalls[i]->getBallX(), gameBalls[i]->getBallY(),
 					gameBalls[i]->getBallX() + gameBalls[i]->ballSpeed.x, gameBalls[j]->getBallY() + gameBalls[i]->ballSpeed.y,
 					gameBalls[i]->getBallX(), gameBalls[j]->getBallY());
@@ -1055,7 +1056,6 @@ void Tema2::Update(float deltaTimeSeconds)
 						gameBalls[j]->ballSpeed.x = gameBalls[j]->ballSpeed.x + someDistance * gameBalls[j]->ballMass * x;
 						gameBalls[j]->ballSpeed.y = gameBalls[j]->ballSpeed.y + someDistance * gameBalls[j]->ballMass * y;
 
-						// Apply 1 position update after collision
 						gameBalls[i]->ballPosition.x = gameBalls[i]->getBallX() + acc * gameBalls[i]->ballSpeed.x  * deltaTimeSeconds;
 						gameBalls[i]->ballPosition.z = gameBalls[i]->getBallY() + acc * gameBalls[i]->ballSpeed.y * deltaTimeSeconds;
 						gameBalls[j]->ballPosition.x = gameBalls[j]->getBallX() + acc * gameBalls[j]->ballSpeed.x * deltaTimeSeconds;
@@ -1068,9 +1068,6 @@ void Tema2::Update(float deltaTimeSeconds)
 	}
 
 	switch (currentGameState) {
-		case gameState::GAME_DEFAULT:
-			camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
-			break;
 		case gameState::GAME_CAMERA_SWITCH:
 			camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
 			first_collision = false;
@@ -1081,41 +1078,49 @@ void Tema2::Update(float deltaTimeSeconds)
 			faulted_player = false;
 			break;
 		case gameState::GAME_CUE_SHOT:
-			distanceToTarget = 0.8;
+			distanceToTarget = 0.4;
 			camera->setCameraDistanceToTarget(distanceToTarget);
 			camera->setPosition(whiteBall->ballPosition - glm::normalize(camera->getForward()) * distanceToTarget);
 			break;
+		case gameState::GAME_DEFAULT:
 		case gameState::GAME_WAIT_FOR_BALLS_TO_STOP:
-			camera->Set(glm::vec3(9.5, 3.6, whiteBallZ / 2 + 0.4), glm::vec3(0.2f, 0.f, 0.0f), glm::vec3(0, 1, 0), distanceToTarget);
+			camera->Set(glm::vec3(9.0f, 6.5, 1.f), glm::vec3(0.9f, 0.4f, 0.9f), glm::vec3(1, 1, 1), distanceToTarget);
 			break;
 		default:
 			break;
 	}
-
-	std::cout << "state" << currentGameState << std::endl;
+	
+	std::cout << "Score" << std::endl;
+	std::cout << "YELLOW" << std::endl;
+	std::cout << "BALLS: " << " " << playersScores[players::YELLOW] << std::endl;
+	std::cout << "FAULTS: " << " " << playersFaults[players::YELLOW] << std::endl;
+	std::cout << "RED" << std::endl;
+	std::cout << "BALLS: " << " " << playersScores[players::RED] << std::endl;
+	std::cout << "FAULTS: " << " " << playersFaults[players::RED] << "\n\n\n";
 
 	if (currentGameState == gameState::GAME_CUE_SHOT) {
 		glm::vec3 cuePosition = camera->getPosition();
-		cuePosition.y = 1.2f;
+		cuePosition.y = 1.3f;
 		cue->cuePosition = cuePosition;
+		cue->component.setPosition(cuePosition);
 		cue->component.lookAt(whiteBall->ballPosition);
 		cue_direction = glm::normalize(cue->cuePosition - whiteBall->ballPosition);
-		cue->cuePosition = whiteBall->ballPosition + cue_direction * 0.6f;
+		cue->cuePosition = whiteBall->getBallPosition() + cue_direction * 0.2f;
 
 		shaders["ShaderLab9"]->Use();
 
-		GLuint animationDirection = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationDirection");
+		GLuint animate_direction = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animate_direction");
 		GLuint cue_shader = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "cue_shader");
 		GLuint colorLoc = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "color");
-		GLuint conditionLoc = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "isUsedByRod");
+		GLuint conditionLoc = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "cue_cond");
 
-		glUniform3fv(animationDirection, 1, glm::value_ptr(cue_direction));
+		glUniform3fv(animate_direction, 1, glm::value_ptr(cue_direction));
 		glUniform1i(cue_shader, 1);
-		glUniform3fv(colorLoc, 1, glm::value_ptr(playersColors[player]));
 		glUniform1i(conditionLoc, 1);
+		glUniform3fv(colorLoc, 1, glm::value_ptr(playersColors[player]));
 		RenderMesh(cue->cueMesh, shaders["ShaderLab9"], cue->component.getModelMatrix());
-		glUniform1i(conditionLoc, 0);
 		glUniform1i(cue_shader, 0);
+		glUniform1i(conditionLoc, 0);
 	}
 }
 
@@ -1201,8 +1206,8 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
 			}
 
 			// Constrain whit ball position to the table 
-			whiteBall->ballPosition.z = clip<float>(whiteBall->ballPosition.z, -0.3f, 2.3f);
-			whiteBall->ballPosition.x = clip<float>(whiteBall->ballPosition.x, 1.5f, 7.2f);
+			whiteBall->ballPosition.z = limit(whiteBall->ballPosition.z, -0.3f, 2.3f);
+			whiteBall->ballPosition.x = limit(whiteBall->ballPosition.x, 1.5f, 7.2f);
 		}
 		break;
 		case gameState::GAME_STARTING:
@@ -1223,8 +1228,8 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
 			}
 
 			// Constrain white ball position to first third of the table
-			whiteBall->ballPosition.z = clip<float>(whiteBall->ballPosition.z, -0.3f, 2.3f);
-			whiteBall->ballPosition.x = clip<float>(whiteBall->ballPosition.x, 5.6f, 7.2f);
+			whiteBall->ballPosition.z = limit(whiteBall->ballPosition.z, -0.3f, 2.3f);
+			whiteBall->ballPosition.x = limit(whiteBall->ballPosition.x, 5.6f, 7.2f);
 		}
 		break;
 
@@ -1233,33 +1238,35 @@ void Tema2::OnInputUpdate(float deltaTime, int mods)
 			if (window->MouseHold(GLFW_MOUSE_BUTTON_LEFT)) {
 				shaders["ShaderLab9"]->Use();
 
+				// Notify vertex shade that we are drawing the rod
+				GLuint en_animation = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "en_animation");
+				GLuint time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
+				
 				animation += deltaTime;
-				GLuint cue_animation = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
-				GLuint cue_time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
-				moving = abs(0.15f * sin(2 * animation));
-
-				glUniform1i(cue_animation, 1);
-				glUniform1f(cue_time, animation);
+				moving = fabs(0.15f * sin(2 * animation));
+				glUniform1i(en_animation, 1);
+				glUniform1f(time, animation);
 			}
 			else {
 				shaders["ShaderLab9"]->Use();
-				GLuint cue_animation = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "animationEnabeled");
-				GLuint cue_time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
+				GLuint en_animation = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "en_animation");
+				GLuint time = glGetUniformLocation(shaders["ShaderLab9"]->GetProgramID(), "time");
+				glUniform1i(en_animation, 0);
 				animation = 0;
-				glUniform1i(cue_animation, 0);
-				glUniform1f(cue_time, animation);
+				glUniform1f(time, animation);
 
 			}
 		}
 			break;
 	}
+
 }
 
 void Tema2::OnKeyPress(int key, int mods)
 {
 	if ((currentGameState == gameState::GAME_STARTING || currentGameState == gameState::GAME_DEFAULT)
 				&& key == GLFW_KEY_SPACE) {
-		camera->RotateThirdPerson_OX(glm::radians(30.0f));
+		camera->RotateThirdPerson_OX(glm::radians(10.0f));
 		currentGameState = gameState::GAME_CUE_SHOT;
 	}
 }
@@ -1274,8 +1281,7 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 	// add mouse move event
 
 	// add mouse move event
-	float sensivityOX = 0.001f;
-	float sensivityOY = 0.001f;
+	float sensivityOX = 0.001f, sensivityOY = 0.001f;
 
 	switch (currentGameState) {
 		case gameState::GAME_CUE_SHOT:
@@ -1285,6 +1291,8 @@ void Tema2::OnMouseMove(int mouseX, int mouseY, int deltaX, int deltaY)
 		case gameState::GAME_WAIT_FOR_BALLS_TO_STOP:
 			camera->RotateFirstPerson_OX(-deltaY * sensivityOY);
 			camera->RotateFirstPerson_OY(-deltaX * sensivityOY);
+			break;
+		default:
 			break;
 	}
 }

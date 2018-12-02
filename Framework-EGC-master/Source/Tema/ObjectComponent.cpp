@@ -27,6 +27,10 @@ void ObjectComponent::lookAt(glm::vec3 target) {
 	}
 }
 
+void ObjectComponent::target() {
+
+}
+
 ObjectComponent::~ObjectComponent() {
 
 }

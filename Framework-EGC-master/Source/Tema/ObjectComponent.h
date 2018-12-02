@@ -46,4 +46,6 @@ public:
 
 	glm::mat4 getModelMatrix();
 
+	void target();
+
 };

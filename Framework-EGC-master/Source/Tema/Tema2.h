@@ -56,8 +56,7 @@ private:
 		return  glm::vec2(x, y);
 	}
 
-	template <typename T>
-	T clip(const T& n, const T& lower, const T& upper) {
+	float limit(const float& n, const float& lower, const float& upper) {
 		return std::max(lower, std::min(n, upper));
 	}
 
@@ -74,7 +73,7 @@ private:
 	vector<Hole*> tableHoles; // holes from game table
 	Ball* whiteBall = new Ball(glm::vec3(3, 3, 3), glm::vec3(whiteBallX, 1.3f, whiteBallZ));
 	glm::vec3 collisionColor;
-	Cue* cue = new Cue(glm::vec3(7.6f, 1.3f, whiteBallZ));
+	Cue* cue = new Cue(glm::vec3(7.6f, 1.3f, whiteBallZ), glm::vec3(0.1, 0.1, 10) * 0.2f);
 	glm::vec3 cue_direction;
 
 	int currentGameState = gameState::GAME_STARTING; // default state
